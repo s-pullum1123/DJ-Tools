@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forward Mixer Helper</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Harmonic mixing data based on the Camelot wheel
+    const mixingRules = {
+      '1A': { perfect: '1A', minusOne: '12A', plusOne: '2A', energy: '3A', scale: '1B', diagonal: '12B', jaws: '8A', mood: '4B' },
+      '2A': { perfect: '2A', minusOne: '1A', plusOne: '3A', energy: '4A', scale: '2B', diagonal: '1B', jaws: '9A', mood: '5B' },
+      '3A': { perfect: '3A', minusOne: '2A', plusOne: '4A', energy: '5A', scale: '3B', diagonal: '2B', jaws: '10A', mood: '6B' },
+      '4A': { perfect: '4A', minusOne: '3A', plusOne: '5A', energy: '6A', scale: '4B', diagonal: '3B', jaws: '11A', mood: '7B' },
+      '5A': { perfect: '5A', minusOne: '4A', plusOne: '6A', energy: '7A', scale: '5B', diagonal: '4B', jaws: '12A', mood: '8B' },
+      '6A': { perfect: '6A', minusOne: '5A', plusOne: '7A', energy: '8A', scale: '6B', diagonal: '5B', jaws: '1A', mood: '9B' },
+      '7A': { perfect: '7A', minusOne: '6A', plusOne: '8A', energy: '9A', scale: '7B', diagonal: '6B', jaws: '2A', mood: '10B' },
+      '8A': { perfect: '8A', minusOne: '7A', plusOne: '9A', energy: '10A', scale: '8B', diagonal: '7B', jaws: '3A', mood: '11B' },
+      '9A': { perfect: '9A', minusOne: '8A', plusOne: '10A', energy: '11A', scale: '9B', diagonal: '8B', jaws: '4A', mood: '12B' },
+      '10A': { perfect: '10A', minusOne: '9A', plusOne: '11A', energy: '12A', scale: '10B', diagonal: '9B', jaws: '5A', mood: '1B' },
+      '11A': { perfect: '11A', minusOne: '10A', plusOne: '12A', energy: '1A', scale: '11B', diagonal: '10B', jaws: '6A', mood: '2B' },
+      '12A': { perfect: '12A', minusOne: '11A', plusOne: '1A', energy: '2A', scale: '12B', diagonal: '11B', jaws: '7A', mood: '3B' },
+      '1B': { perfect: '1B', minusOne: '12B', plusOne: '2B', energy: '3B', scale: '1A', diagonal: '2A', jaws: '8B', mood: '10A' },
+      '2B': { perfect: '2B', minusOne: '1B', plusOne: '3B', energy: '4B', scale: '2A', diagonal: '3A', jaws: '9B', mood: '11A' },
+      '3B': { perfect: '3B', minusOne: '2B', plusOne: '4B', energy: '5B', scale: '3A', diagonal: '4A', jaws: '10B', mood: '12A' },
+      '4B': { perfect: '4B', minusOne: '3B', plusOne: '5B', energy: '6B', scale: '4A', diagonal: '5A', jaws: '11B', mood: '1A' },
+      '5B': { perfect: '5B', minusOne: '4B', plusOne: '6B', energy: '7B', scale: '5A', diagonal: '6A', jaws: '12B', mood: '2A' },
+      '6B': { perfect: '6B', minusOne: '5B', plusOne: '7B', energy: '8B', scale: '6A', diagonal: '7A', jaws: '1B', mood: '3A' },
+      '7B': { perfect: '7B', minusOne: '6B', plusOne: '8B', energy: '9B', scale: '7A', diagonal: '8A', jaws: '2B', mood: '4A' },
+      '8B': { perfect: '8B', minusOne: '7B', plusOne: '9B', energy: '10B', scale: '8A', diagonal: '9A', jaws: '3B', mood: '5A' },
+      '9B': { perfect: '9B', minusOne: '8B', plusOne: '10B', energy: '11B', scale: '9A', diagonal: '10A', jaws: '4B', mood: '6A' },
+      '10B': { perfect: '10B', minusOne: '9B', plusOne: '11B', energy: '12B', scale: '10A', diagonal: '11A', jaws: '5B', mood: '7A' },
+      '11B': { perfect: '11B', minusOne: '10B', plusOne: '12B', energy: '1B', scale: '11A', diagonal: '12A', jaws: '6B', mood: '8A' },
+      '12B': { perfect: '12B', minusOne: '11B', plusOne: '1B', energy: '2B', scale: '12A', diagonal: '1A', jaws: '7B', mood: '9A' },
+    };
+
+    const allKeys = Object.keys(mixingRules).sort((a, b) => {
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (numA !== numB) return numA - numB;
+      return a.localeCompare(b);
+    });
+
+    function ForwardMixerHelper() {
+      const [currentKey, setCurrentKey] = useState('');
+      const [showResults, setShowResults] = useState(false);
+
+      const handleShowMixes = () => {
+        if (currentKey) {
+          setShowResults(true);
+        }
+      };
+
+      const results = currentKey ? mixingRules[currentKey] : null;
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 p-8 font-sans">
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght:700;900&family=Space+Mono:wght@400;700&display=swap');
+            
+            * {
+              box-sizing: border-box;
+            }
+            
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            
+            .glow {
+              text-shadow: 0 0 20px rgba(168, 85, 247, 0.8),
+                           0 0 40px rgba(168, 85, 247, 0.4);
+            }
+            
+            .card-glow {
+              box-shadow: 0 0 30px rgba(168, 85, 247, 0.3),
+                          inset 0 0 60px rgba(168, 85, 247, 0.05);
+            }
+            
+            .pulse {
+              animation: pulse 2s ease-in-out infinite;
+            }
+            
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+            
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            
+            .animate-slide {
+              animation: slideUp 0.5s ease-out forwards;
+            }
+            
+            .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+            .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+            .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+            
+            .select-custom {
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a855f7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+              background-repeat: no-repeat;
+              background-position: right 1rem center;
+              background-size: 1.5em;
+              padding-right: 3rem;
+            }
+          `}</style>
+
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h1 className="text-6xl font-black mb-4 glow" style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.05em' }}>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400">
+                  FORWARD MIXER
+                </span>
+              </h1>
+              <p className="text-purple-300 text-xl" style={{ fontFamily: 'Space Mono, monospace' }}>
+                🎧 Find your next harmonic transition
+              </p>
+            </div>
+
+            <div className="bg-slate-900/60 backdrop-blur-lg rounded-3xl p-8 mb-8 border border-purple-500/30 card-glow">
+              <label className="block text-purple-300 text-sm font-bold mb-4 uppercase tracking-wider" style={{ fontFamily: 'Space Mono, monospace' }}>
+                Current Track Key
+              </label>
+              <div className="flex gap-4 flex-col sm:flex-row">
+                <select
+                  value={currentKey}
+                  onChange={(e) => {
+                    setCurrentKey(e.target.value);
+                    setShowResults(false);
+                  }}
+                  className="flex-1 bg-slate-800/80 border-2 border-purple-500/50 rounded-xl px-6 py-4 text-purple-100 text-2xl font-bold focus:outline-none focus:border-purple-400 transition-all select-custom appearance-none"
+                  style={{ fontFamily: 'Orbitron, sans-serif' }}
+                >
+                  <option value="">Select Key...</option>
+                  {allKeys.map(key => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleShowMixes}
+                  disabled={!currentKey}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-700 disabled:to-slate-700 text-white font-black px-12 py-4 rounded-xl text-xl uppercase tracking-wider transition-all transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
+                  style={{ fontFamily: 'Space Mono, monospace' }}
+                >
+                  Show Mixes →
+                </button>
+              </div>
+            </div>
+
+            {showResults && results && (
+              <div className="grid grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-emerald-900/40 to-green-900/40 backdrop-blur-lg rounded-3xl p-8 border border-emerald-500/30 animate-slide stagger-1">
+                  <h2 className="text-2xl font-black mb-6 text-emerald-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                    ✓ SAFE TRANSITIONS
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="bg-emerald-950/50 rounded-xl p-6 border border-emerald-500/30">
+                      <div className="text-emerald-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>PERFECT MIX</div>
+                      <div className="text-5xl font-black text-emerald-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.perfect}</div>
+                    </div>
+                    <div className="bg-emerald-950/50 rounded-xl p-6 border border-emerald-500/30">
+                      <div className="text-emerald-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>↘ -1 MIX</div>
+                      <div className="text-5xl font-black text-emerald-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.minusOne}</div>
+                    </div>
+                    <div className="bg-emerald-950/50 rounded-xl p-6 border border-emerald-500/30">
+                      <div className="text-emerald-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>↗ +1 MIX</div>
+                      <div className="text-5xl font-black text-emerald-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.plusOne}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-900/40 to-yellow-900/40 backdrop-blur-lg rounded-3xl p-8 border border-amber-500/30 animate-slide stagger-2">
+                  <h2 className="text-2xl font-black mb-6 text-amber-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                    ⚡ ENERGY SHIFTS
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="bg-amber-950/50 rounded-xl p-6 border border-amber-500/30">
+                      <div className="text-amber-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>⤴ ENERGY BOOST</div>
+                      <div className="text-5xl font-black text-amber-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.energy}</div>
+                    </div>
+                    <div className="bg-amber-950/50 rounded-xl p-6 border border-amber-500/30">
+                      <div className="text-amber-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>⟲ SCALE CHANGE</div>
+                      <div className="text-5xl font-black text-amber-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.scale}</div>
+                    </div>
+                    <div className="bg-amber-950/50 rounded-xl p-6 border border-amber-500/30">
+                      <div className="text-amber-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>✕ DIAGONAL MIX</div>
+                      <div className="text-5xl font-black text-amber-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.diagonal}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-cyan-900/40 to-blue-900/40 backdrop-blur-lg rounded-3xl p-8 border border-cyan-500/30 animate-slide stagger-3">
+                  <h2 className="text-2xl font-black mb-6 text-cyan-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                    🌟 SPECIAL EFFECTS
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="bg-cyan-950/50 rounded-xl p-6 border border-cyan-500/30">
+                      <div className="text-cyan-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>🎵 JAW'S MIX</div>
+                      <div className="text-5xl font-black text-cyan-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.jaws}</div>
+                      <div className="text-cyan-400 text-xs mt-2" style={{ fontFamily: 'Space Mono, monospace' }}>Dramatic tension</div>
+                    </div>
+                    <div className="bg-cyan-950/50 rounded-xl p-6 border border-cyan-500/30">
+                      <div className="text-cyan-400 text-sm font-bold mb-2" style={{ fontFamily: 'Space Mono, monospace' }}>🔄 MOOD SHIFTER</div>
+                      <div className="text-5xl font-black text-cyan-200" style={{ fontFamily: 'Orbitron, sans-serif' }}>{results.mood}</div>
+                      <div className="text-cyan-400 text-xs mt-2" style={{ fontFamily: 'Space Mono, monospace' }}>Emotional pivot</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!showResults && (
+              <div className="text-center py-20">
+                <div className="text-purple-500/30 text-8xl mb-4 pulse">🎛️</div>
+                <p className="text-purple-400/50 text-xl" style={{ fontFamily: 'Space Mono, monospace' }}>
+                  Select a key to see mixing options
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<ForwardMixerHelper />, document.getElementById('root'));
+  </script>
+</body>
+</html>
